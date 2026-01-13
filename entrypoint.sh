@@ -13,4 +13,5 @@ x11vnc -display :99 \
        -passwd secret \
        -shared &
 
-exec tail -f /dev/null
+echo "Starting browser-n8n-local bridge..."
+exec python app.py
