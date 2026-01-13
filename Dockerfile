@@ -1,43 +1,45 @@
-FROM python:3.11
+FROM python:3.11-slim
+
+# 1. Install system dependencies first
+# We include xvfb and x11vnc for the virtual display
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    gnupg \
+    xvfb \
+    x11vnc \
+    fluxbox \
+    dbus-x11 \
+    libnss3 \
+    libnspr4 \
+    libasound2 \
+    libgbm1 \
+    ca-certificates \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+# 2. Install Python requirements
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN playwright install
+# 3. Install Playwright Browsers
+# --with-deps here ensures any missed OS-level dependencies for Chromium are grabbed
+RUN python -m playwright install chromium --with-deps
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libnss3 \
-    libnspr4 \
-    libdbus-1-3 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libxkbcommon0 \
-    libasound2 \
-    libatspi2.0-0 \
-    xvfb \
-    x11vnc \
-    fontconfig \
-    # libx11-xcb1 libgtk-3-0 gstreamer1.0-libav gstreamer1.0-plugins-good
-    && rm -rf /var/lib/apt/lists/*
-
-
+# 4. Setup Environment
 ENV DISPLAY=:99
-
-EXPOSE 5900
+ENV PYTHONUNBUFFERED=1
 
 COPY . .
+
+# Ensure entrypoint is executable
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+EXPOSE 8000
+EXPOSE 5900
+
 ENTRYPOINT ["/entrypoint.sh"]
 
 
